@@ -1,0 +1,49 @@
+
+
+CREATE COMPUTE MODULE getValidateCmrData_validateInputParm
+	DECLARE url1 EXTERNAL CHARACTER;
+	DECLARE username EXTERNAL CHARACTER;
+	DECLARE password EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		SET OutputRoot.HTTPRequestHeader."Authorization" = 'Basic '||base64Encode(CAST(username || ':' || password as BLOB CCSID InputRoot.Properties.CodedCharSetId));
+		DECLARE url2 CHARACTER;
+		-- DECLARE cmrapi CHARACTER;
+		DECLARE index REFERENCE TO InputLocalEnvironment.REST.Input.Parameters;
+		-- SET url1 ='https://connect-preprod.ibm.com/DigitalCommerce/services/getCMRData?svcId=Q2C_Project&svcPwd=a29sW@ti';
+		IF ((FIELDTYPE(index.issuingCountryCode) IS NOT NULL) AND (FIELDTYPE(index.customerNumber) IS NOT NULL) AND (FIELDTYPE(index.customerName) IS NULL) AND (FIELDTYPE(index.postalCode) IS NULL)) THEN
+			IF LENGTH(index.issuingCountryCode) = 3 AND  LENGTH(index.customerNumber) <= 10 THEN
+				SET url2 = '&issuingCountryCode=' || index.issuingCountryCode || '&customerNumber=' || index.customerNumber;
+			ELSE
+				PROPAGATE TO TERMINAL 'failure';
+			END IF;
+		ELSEIF ((FIELDTYPE(index.issuingCountryCode) IS NOT NULL) AND (FIELDTYPE(index.customerNumber) IS NULL) AND (FIELDTYPE(index.customerName) IS NOT NULL) AND (FIELDTYPE(index.postalCode) IS NOT NULL)) THEN
+			IF LENGTH(index.issuingCountryCode) = 3 AND LENGTH(index.customerName) <=30 THEN
+				SET url2 = '&issuingCountryCode=' || index.issuingCountryCode ||'&customerName=' || index.customerName || '&postalCode=' || index.postalCode;
+			ELSE
+				PROPAGATE TO TERMINAL 'failure';
+			END IF;
+		ELSE
+			PROPAGATE TO TERMINAL 'failure';
+		END IF;
+		-- SET cmrapi = REPLACE(url1||url2,'NULL','');
+		SET InputLocalEnvironment.Destination.HTTP.RequestURL = REPLACE(url1||url2,'NULL','');
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

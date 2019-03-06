@@ -1,0 +1,170 @@
+$integration: 'http://ibm.com/appconnect/integration/v2/integrationFile'
+integration:
+  type: trigger-action
+  trigger-interfaces:
+    trigger-interface-1:
+      type: event-trigger
+      triggers:
+        CREATED:
+          input-context:
+            data: Lead
+          assembly:
+            $ref: '#/integration/assemblies/assembly-1'
+          options: {}
+      connector-type: salesforce
+      account-name: Account 1
+  action-interfaces:
+    action-interface-1:
+      type: api-action
+      business-object: request
+      connector-type: iiboc
+      account-name: Account 1
+      actions:
+        INVOKEACTION: {}
+    action-interface-2:
+      type: api-action
+      business-object: Lead
+      connector-type: salesforce
+      account-name: Account 1
+      actions:
+        UPSERTWITHWHERE: {}
+  assemblies:
+    assembly-1:
+      assembly:
+        execute:
+          - custom-action:
+              name: Callable flow Invoke
+              target:
+                $ref: '#/integration/action-interfaces/action-interface-1'
+              action: INVOKEACTION
+              map:
+                customSchemas:
+                  properties.`localEnvironment`:
+                    type: object
+                    properties:
+                      FileName:
+                        type: string
+                      DirectoryName:
+                        type: string
+                  properties.`message`:
+                    type: object
+                    properties:
+                      FirstName:
+                        type: string
+                      LastName:
+                        type: string
+                      Company:
+                        type: string
+                      Email:
+                        type: string
+                mappings:
+                  - Application:
+                      template: AppConnectToIIB
+                  - Endpoint:
+                      template: WRITE_TO_FILE
+                  - localEnvironment:
+                      mappings:
+                        - DirectoryName:
+                            template: /tmp
+                        - FileName:
+                            template: demo1.txt
+                  - message:
+                      mappings:
+                        - Company:
+                            template: '{{$Trigger.Company}}'
+                        - Email:
+                            template: '{{$Trigger.Email}}'
+                        - FirstName:
+                            template: '{{$Trigger.FirstName}}'
+                        - LastName:
+                            template: '{{$Trigger.LastName}}'
+                $map: 'http://ibm.com/appconnect/map/v1'
+                input:
+                  - variable: Trigger
+                    $ref: '#/trigger/payload'
+          - upsert-action:
+              name: Salesforce Update or create lead
+              target:
+                $ref: '#/integration/action-interfaces/action-interface-2'
+              map:
+                mappings:
+                  - City:
+                      template: '{{$Trigger.City}}'
+                  - CleanStatus:
+                      template: '{{$Trigger.CleanStatus}}'
+                  - Company:
+                      template: '{{$Trigger.Company}}'
+                  - CompanyDunsNumber:
+                      template: '{{$Trigger.CompanyDunsNumber}}'
+                  - Country:
+                      template: '{{$Trigger.Country}}'
+                  - CurrentGenerators__c:
+                      template: '{{$Trigger.CurrentGenerators__c}}'
+                  - DandbCompanyId:
+                      template: '{{$Trigger.DandbCompanyId}}'
+                  - Description:
+                      template: >-
+                        Main Lead Id:
+                        {{$CallableflowInvoke.localEnvironment.Id}}
+                  - Email:
+                      template: '{{$Trigger.Email}}'
+                  - EmailBouncedReason:
+                      template: '{{$Trigger.EmailBouncedReason}}'
+                  - Fax:
+                      template: '{{$Trigger.Fax}}'
+                  - FirstName:
+                      template: '{{$Trigger.FirstName}}'
+                  - GeocodeAccuracy:
+                      template: '{{$Trigger.GeocodeAccuracy}}'
+                  - Industry:
+                      template: '{{$Trigger.Industry}}'
+                  - Jigsaw:
+                      template: '{{$Trigger.Jigsaw}}'
+                  - LastName:
+                      template: '{{$Trigger.LastName}}'
+                  - LeadSource:
+                      template: '{{$Trigger.LeadSource}}'
+                  - MobilePhone:
+                      template: '{{$Trigger.MobilePhone}}'
+                  - OwnerId:
+                      template: '{{$Trigger.OwnerId}}'
+                  - Phone:
+                      template: '{{$Trigger.Phone}}'
+                  - PostalCode:
+                      template: '{{$Trigger.PostalCode}}'
+                  - Primary__c:
+                      template: '{{$Trigger.Primary__c}}'
+                  - ProductInterest__c:
+                      template: '{{$Trigger.ProductInterest__c}}'
+                  - Rating:
+                      template: '{{$Trigger.Rating}}'
+                  - SICCode__c:
+                      template: '{{$Trigger.SICCode__c}}'
+                  - Salutation:
+                      template: '{{$Trigger.Salutation}}'
+                  - State:
+                      template: '{{$Trigger.State}}'
+                  - Status:
+                      template: '{{$Trigger.Status}}'
+                  - Street:
+                      template: '{{$Trigger.Street}}'
+                  - Title:
+                      template: '{{$Trigger.Title}}'
+                  - Website:
+                      template: '{{$Trigger.Website}}'
+                $map: 'http://ibm.com/appconnect/map/v1'
+                input:
+                  - variable: Trigger
+                    $ref: '#/trigger/payload'
+                  - variable: CallableflowInvoke
+                    $ref: '#/node-output/Callable flow Invoke/response/payload'
+              filter:
+                where:
+                  Id: '{{$Trigger.Id}}'
+                input:
+                  - variable: Trigger
+                    $ref: '#/trigger/payload'
+                  - variable: CallableflowInvoke
+                    $ref: '#/node-output/Callable flow Invoke/response/payload'
+  name: Salesforce Lead to on-premises
+models: {}

@@ -1,0 +1,44 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "title" : "feedApttus",
+    "version" : "1.0.0",
+    "description" : "feedApttus"
+  },
+  "paths" : {
+    "/getCmrData/validateCmrData" : {
+      "get" : {
+        "operationId" : "getValidateCmrData",
+        "responses" : {
+          "200" : {
+            "description" : "The operation was successful.",
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        },
+        "produces" : [ "application/json" ],
+        "description" : "Retrieve and Validate CmrData to feed Apttus",
+        "parameters" : [ {
+          "name" : "postalCode",
+          "in" : "query",
+          "type" : "string"
+        }, {
+          "name" : "customerNumber",
+          "in" : "query",
+          "type" : "string"
+        }, {
+          "name" : "issuingCountryCode",
+          "in" : "query",
+          "type" : "string"
+        }, {
+          "name" : "customerName",
+          "in" : "query",
+          "type" : "string"
+        } ]
+      }
+    }
+  },
+  "host" : "localhost:7900",
+  "basePath" : "/feedapttus/v1"
+}
